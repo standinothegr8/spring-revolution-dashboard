@@ -1,0 +1,8 @@
+.build/
+__pycache__/
+.venv/
+assets/index.html
+.vercel/
+node_modules/
+Claude outputs/
+*.bak

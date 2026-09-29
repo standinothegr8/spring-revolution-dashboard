@@ -1,0 +1,838 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>Spring Revolution Dashboard — by Stan</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Myanmar:wght@400;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0f1317; --surface:#161c22; --surface-2:#1d252d; --line:rgba(242,239,230,.10); --line-2:rgba(242,239,230,.18);
+  --ink:#f2efe6; --ink-2:#b5b9b3; --ink-3:#7f857f;
+  --accent:#e8b93a; --accent-ink:#1a1408; --accent-soft:rgba(232,185,58,.14);
+  --red:#d0524a; --red-soft:rgba(208,82,74,.14);
+  --s-res:#b8891c; --s-junta:#5a8fd0; --s-crit:#d0524a; --s-hum:#3aa88f;
+  --grid:rgba(242,239,230,.08); --axis:rgba(242,239,230,.22);
+  --petal:232,185,58;
+  --display:"Bricolage Grotesque",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace; --mm:"Noto Sans Myanmar","Pyidaungsu","Myanmar Text",sans-serif;
+  --radius:6px;
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f3f0e8; --surface:#faf8f2; --surface-2:#ece8dd; --line:rgba(20,22,24,.10); --line-2:rgba(20,22,24,.2);
+  --ink:#15191d; --ink-2:#4f5551; --ink-3:#7d827c;
+  --accent:#a97a0c; --accent-ink:#fff8e4; --accent-soft:rgba(169,122,12,.12);
+  --red:#b3342e; --red-soft:rgba(179,52,46,.12);
+  --s-res:#a97a0c; --s-junta:#2f6cb5; --s-crit:#b3342e; --s-hum:#1f8a72;
+  --grid:rgba(20,22,24,.08); --axis:rgba(20,22,24,.25); --petal:169,122,12;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme:light;
+    --bg:#f3f0e8; --surface:#faf8f2; --surface-2:#ece8dd; --line:rgba(20,22,24,.10); --line-2:rgba(20,22,24,.2);
+    --ink:#15191d; --ink-2:#4f5551; --ink-3:#7d827c;
+    --accent:#a97a0c; --accent-ink:#fff8e4; --accent-soft:rgba(169,122,12,.12);
+    --red:#b3342e; --red-soft:rgba(179,52,46,.12);
+    --s-res:#a97a0c; --s-junta:#2f6cb5; --s-crit:#b3342e; --s-hum:#1f8a72;
+    --grid:rgba(20,22,24,.08); --axis:rgba(20,22,24,.25); --petal:169,122,12;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+#petals{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:0 64px}
+a{color:var(--accent)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;font-weight:600;letter-spacing:-.01em}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.mm{font-family:var(--mm)}
+
+/* header */
+.masthead{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;padding-block:36px 20px;border-bottom:1px solid var(--line)}
+.masthead .mm-title{font-family:var(--mm);font-size:15px;color:var(--accent);margin-bottom:6px;font-weight:600}
+.masthead h1{font-size:clamp(30px,4.6vw,52px);line-height:1;font-weight:700;font-variation-settings:"opsz" 96}
+.masthead h1 em{font-style:normal;color:var(--accent)}
+.masthead .byline{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-top:8px}
+.masthead p{max-width:60ch;color:var(--ink-2);margin:12px 0 0}
+.daycount{display:flex;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+.daycount .big{font-family:var(--display);font-size:clamp(40px,5vw,64px);font-weight:700;line-height:1;letter-spacing:-.03em;color:var(--accent)}
+.daycount .lab{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.daycount .asof{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:6px}
+.daycount .asof b{color:var(--ink);font-weight:500}
+
+/* ticker */
+.ticker{margin-top:14px;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;font-size:13.5px}
+.ticker q{quotes:"\201C" "\201D";color:var(--ink);font-family:var(--display);font-size:15px}
+.ticker .who{font-family:var(--mono);font-size:11px;color:var(--ink-3);white-space:nowrap}
+.ticker .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+@media (max-width:620px){.ticker{grid-template-columns:auto 1fr}.ticker .who{grid-column:2}}
+
+/* tabs */
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;overflow-x:auto;padding-block:12px;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:1px solid transparent;background:transparent;color:var(--ink-2);font:500 13.5px var(--body);padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap;display:flex;gap:8px;align-items:center}
+.tab .k{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.tab:hover{color:var(--ink);background:var(--surface-2)}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tab[aria-selected="true"] .k{color:var(--accent-ink);opacity:.75}
+.tab:focus-visible,button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{padding-top:28px}
+.panel[hidden]{display:none}
+
+/* sections */
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.sec-head h2{font-size:22px}
+.sec-head p{margin:0;color:var(--ink-2);max-width:70ch}
+.grid{display:grid;gap:14px}
+.g6{grid-template-columns:repeat(6,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g21{grid-template-columns:2fr 1fr}
+.g12{grid-template-columns:1fr 2fr}
+.mt{margin-top:14px}
+@media (max-width:980px){.g6{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:1fr 1fr}.g3,.g21,.g12{grid-template-columns:1fr 1fr}}
+@media (max-width:620px){.g6,.g4,.g3,.g2,.g21,.g12{grid-template-columns:1fr 1fr}.masthead{grid-template-columns:1fr}.daycount{align-items:flex-start;text-align:left}}
+@media (max-width:420px){.g6,.g4,.g3,.g2,.g21,.g12{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;min-width:0}
+.card h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.card .sub{font-size:12.5px;color:var(--ink-3);margin:0 0 12px}
+.src{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:10px;letter-spacing:.02em}
+.caveat{font-size:12.5px;color:var(--ink-3);margin-top:12px;max-width:80ch}
+
+/* KPI tiles */
+.tile{position:relative;overflow:hidden}
+.tile .label{font-size:12px;color:var(--ink-2);display:flex;justify-content:space-between;gap:8px}
+.tile .value{font-family:var(--display);font-size:clamp(26px,3vw,36px);font-weight:700;line-height:1.1;margin-top:8px;letter-spacing:-.02em}
+.tile .value small{font-size:.5em;font-weight:500;color:var(--ink-2);margin-left:2px}
+.tile .note{font-size:12px;color:var(--ink-3);margin-top:6px}
+.tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--tile-c,var(--accent))}
+.tile.c-crit{--tile-c:var(--s-crit)} .tile.c-hum{--tile-c:var(--s-hum)} .tile.c-res{--tile-c:var(--s-res)} .tile.c-junta{--tile-c:var(--s-junta)}
+.pill{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:var(--surface-2);color:var(--ink-2);white-space:nowrap}
+.pill.crit{background:var(--red-soft);color:var(--red)}
+.pill.acc{background:var(--accent-soft);color:var(--accent)}
+
+/* every day strip */
+.daily{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:14px 18px}
+.daily .t{font-family:var(--display);font-size:18px;font-weight:600;white-space:nowrap}
+.daily .t small{display:block;font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:400}
+.daily .items{display:flex;gap:22px;flex-wrap:wrap}
+.daily .it b{font-family:var(--display);font-size:22px;font-weight:700;color:var(--ink);display:block;line-height:1}
+.daily .it span{font-size:12px;color:var(--ink-2)}
+@media (max-width:620px){.daily{grid-template-columns:1fr}}
+
+/* charts */
+.chart{width:100%;height:auto;display:block}
+.chart text{font-family:var(--mono);font-size:11px;fill:var(--ink-3)}
+.chart .lbl{fill:var(--ink-2)} .chart .strong{fill:var(--ink);font-weight:500}
+.chart .grid{stroke:var(--grid)} .chart .axis{stroke:var(--axis)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font:12px var(--body);padding:6px 9px;border-radius:4px;z-index:50;opacity:0;transform:translate(-50%,-120%);transition:opacity .12s;max-width:260px}
+.tip b{font-family:var(--mono)}
+.tip.on{opacity:1}
+.stack{display:flex;height:22px;border-radius:4px;overflow:hidden;gap:2px;background:var(--surface-2)}
+.stack span{display:block;height:100%}
+.share{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:8px}
+.meter{position:relative;height:14px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.meter i{position:absolute;left:0;top:0;bottom:0;background:var(--s-hum);border-radius:999px}
+.meter em{position:absolute;top:0;bottom:0;width:2px;background:var(--ink-2)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px;margin-top:10px}
+.kv b{font-family:var(--mono);font-weight:500;text-align:right;white-space:nowrap}
+.kv span{color:var(--ink-2)}
+.hbars{display:grid;gap:8px;margin-top:8px}
+.hb{display:grid;grid-template-columns:120px 1fr auto;gap:10px;align-items:center;font-size:12.5px}
+.hb .l{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hb .b{height:10px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.hb .b i{display:block;height:100%;background:var(--c,var(--s-hum));border-radius:3px}
+.hb .v{font-family:var(--mono);font-size:12px;white-space:nowrap}
+@media (max-width:420px){.hb{grid-template-columns:90px 1fr auto}}
+
+/* cartogram */
+.carto-wrap{display:grid;grid-template-columns:1.1fr 1fr;gap:14px}
+@media (max-width:820px){.carto-wrap{grid-template-columns:1fr}}
+.carto{width:100%;height:auto}
+.carto .t{cursor:pointer}
+.carto .t rect{stroke:var(--surface);stroke-width:3;rx:6;transition:filter .15s}
+.carto .t:hover rect{filter:brightness(1.15)}
+.carto .t.sel rect{stroke:var(--ink);stroke-width:2.5}
+.carto .t text{font-family:var(--body);font-size:11px;fill:#fff;text-anchor:middle;pointer-events:none;font-weight:500}
+.carto .t text.s{font-family:var(--mono);font-size:9.5px;opacity:.85}
+.carto-key{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink-2);margin-top:8px}
+.carto-key i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-2px}
+.region h3{font-size:20px}
+.region .st{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:4px 0 10px}
+.region p{margin:0 0 10px;color:var(--ink-2)}
+
+/* timeline */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{appearance:none;border:1px solid var(--line-2);background:transparent;color:var(--ink-2);font:12.5px var(--body);padding:5px 11px;border-radius:999px;cursor:pointer;display:flex;align-items:center;gap:7px}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.chip[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);border-color:var(--ink-3)}
+.tl-wrap{overflow-x:auto;padding-bottom:6px}
+.tl{min-width:900px}
+.tl .ev{cursor:pointer}
+.tl .ev:hover{stroke:var(--ink);stroke-width:2}
+.tl .ev.sel{stroke:var(--ink);stroke-width:2.5}
+.tl .yr{fill:var(--ink);font-family:var(--display);font-size:18px;font-weight:600}
+.tl .ph{fill:var(--ink);font-family:var(--body);font-size:11px;font-weight:500}
+.ev-card{margin-top:14px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.ev-card .date{font-family:var(--mono);font-size:12px;color:var(--accent);white-space:nowrap;padding-top:3px}
+.ev-card h3{font-size:18px}
+.ev-card p{margin:6px 0 0;color:var(--ink-2);max-width:70ch}
+.ev-card .why{margin-top:8px;font-size:12.5px;color:var(--ink-3);border-left:2px solid var(--accent);padding-left:10px}
+.ev-list{margin-top:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.ev-item{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:4px;border:1px solid transparent;cursor:pointer;font-size:13px}
+.ev-item:hover{background:var(--surface-2)}
+.ev-item.sel{border-color:var(--line-2);background:var(--surface-2)}
+.ev-item i{flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px;background:var(--c)}
+.ev-item .d{font-family:var(--mono);font-size:11px;color:var(--ink-3);display:block}
+
+/* actors */
+.actor-wrap{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+@media (max-width:820px){.actor-wrap{grid-template-columns:1fr}}
+.actors{width:100%;height:auto}
+.actors .node{cursor:pointer}
+.actors .node circle{stroke:var(--surface);stroke-width:2}
+.actors .node:hover circle{stroke:var(--ink)}
+.actors .node.sel circle{stroke:var(--ink);stroke-width:3}
+.actors .node text{font-family:var(--body);font-size:11px;fill:var(--ink);text-anchor:middle;pointer-events:none}
+.actors .link{stroke:var(--line-2);fill:none}
+.actors .link.cf{stroke:var(--s-junta);stroke-dasharray:4 4}
+.actors .link.hostile{stroke:var(--s-crit);stroke-dasharray:1 4;stroke-linecap:round}
+.actors .link.dim{opacity:.12}
+.actors .node.dim{opacity:.22}
+.actor-detail h3{font-size:20px}
+.actor-detail .role{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:4px 0 10px}
+.actor-detail p{margin:0 0 10px;color:var(--ink-2)}
+.actor-detail .rel{font-size:13px;color:var(--ink-2)}
+.actor-detail .rel b{color:var(--ink);font-weight:500}
+.actor-detail .q{margin-top:10px;font-size:12.5px;color:var(--ink-3)}
+.actor-detail .q b{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;color:var(--ink-3);margin-bottom:2px}
+
+/* tensions */
+.pol{display:grid;gap:12px}
+.pol .row{padding:16px 18px}
+.pol .heads{display:flex;justify-content:space-between;gap:12px;font-family:var(--display);font-size:16px;font-weight:600}
+.pol .heads span{max-width:45%}
+.pol .heads span:last-child{text-align:right}
+.pol input[type=range]{width:100%;margin:10px 0 6px;accent-color:var(--accent)}
+.pol .pros{display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:12.5px;color:var(--ink-2)}
+.pol .pros div:last-child{text-align:right}
+.pol .pros b{display:block;color:var(--ink-3);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;margin-bottom:2px}
+.pol .read{font-size:12.5px;color:var(--accent);margin-top:8px;font-family:var(--mono)}
+.pol .ev{font-size:12px;color:var(--ink-3);margin-top:8px;border-top:1px dashed var(--line);padding-top:8px}
+.btn{appearance:none;border:1px solid var(--line-2);background:transparent;color:var(--ink);font:500 13px var(--body);padding:8px 14px;border-radius:4px;cursor:pointer}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+/* scenarios */
+.scen{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:820px){.scen{grid-template-columns:1fr}}
+.scen .card{border-top:3px solid var(--sc)}
+.scen .score{font-family:var(--display);font-size:34px;font-weight:700;line-height:1;margin:8px 0 2px}
+.scen .bar{height:6px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin:8px 0 12px}
+.scen .bar i{display:block;height:100%;background:var(--sc);width:0;transition:width .3s}
+.scen p{font-size:13px;color:var(--ink-2);margin:0}
+.signs{margin-top:18px}
+.signs label{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:4px;border:1px solid var(--line);font-size:13.5px;cursor:pointer;background:var(--surface)}
+.signs label:hover{background:var(--surface-2)}
+.signs input{margin-top:3px;accent-color:var(--accent)}
+.signs .tag{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-left:auto;white-space:nowrap;padding-top:3px}
+.signs .list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:720px){.signs .list{grid-template-columns:1fr}}
+.horizon{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:820px){.horizon{grid-template-columns:1fr}}
+.horizon .card{position:relative}
+.horizon .h{font-family:var(--display);font-size:13px;letter-spacing:.02em;color:var(--accent);margin-bottom:6px}
+.horizon ul{margin:0;padding-left:16px;font-size:13px;color:var(--ink-2)}
+.horizon li{margin-bottom:4px}
+
+/* calibration game */
+.cal{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:820px){.cal{grid-template-columns:1fr}}
+.cq .q{font-family:var(--display);font-size:16px;font-weight:600;margin-bottom:8px}
+.cq input[type=range]{width:100%;accent-color:var(--accent);margin:8px 0 4px}
+.cq .guess{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
+.cq .guess b{color:var(--ink);font-size:16px}
+.cq .res{margin-top:10px;font-size:13px;color:var(--ink-2);min-height:44px}
+.cq .res b{font-family:var(--mono);color:var(--ink)}
+.cq .res .off{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:999px;background:var(--surface-2);margin-left:6px}
+.cq .res .off.good{background:var(--accent-soft);color:var(--accent)}
+.cq .res .off.bad{background:var(--red-soft);color:var(--red)}
+.cq .actions{margin-top:8px;display:flex;gap:8px;align-items:center}
+.calscore{padding:16px 18px;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;margin-bottom:14px}
+.calscore .n{font-family:var(--display);font-size:44px;font-weight:700;line-height:1;color:var(--accent)}
+.calscore p{margin:0;color:var(--ink-2);font-size:13.5px}
+
+/* recalibrate */
+.flip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.flip{perspective:1000px;min-height:200px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;min-height:200px;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;padding:16px 18px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.face.back{transform:rotateY(180deg);background:var(--surface-2);border-color:var(--accent)}
+.face .eyebrow{color:var(--ink-3)} .face.back .eyebrow{color:var(--accent)}
+.face p{margin:0;font-size:14px;line-height:1.45}
+.face .hint{margin-top:auto;font-size:11px;color:var(--ink-3);font-family:var(--mono)}
+@media (prefers-reduced-motion:reduce){.flip .in,.scen .bar i,.tip{transition:none}}
+.own{margin-top:18px;display:grid;grid-template-columns:1fr 1fr auto;gap:8px}
+@media (max-width:720px){.own{grid-template-columns:1fr}}
+.own input{font:14px var(--body);padding:9px 12px;border:1px solid var(--line-2);border-radius:4px;background:var(--surface);color:var(--ink)}
+.own-list{margin-top:10px;display:grid;gap:6px}
+.own-list div{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;font-size:13px;padding:8px 12px;background:var(--surface);border-radius:4px;border:1px solid var(--line)}
+.own-list .arr{color:var(--accent);font-family:var(--mono)}
+.foot{margin-top:40px;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-2)}
+.foot h3{font-size:13px;margin-bottom:8px;color:var(--ink)}
+.foot ul{margin:0;padding-left:18px;columns:2;column-gap:28px}
+@media (max-width:720px){.foot ul{columns:1}}
+.foot li{margin-bottom:4px;break-inside:avoid}
+</style>
+
+<canvas id="petals" aria-hidden="true"></canvas>
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <div class="mm-title">နွေဦးတော်လှန်ရေး · ပြန်လည်ချိန်ညှိခြင်း</div>
+      <div class="eyebrow">Recalibrating the Spring Revolution · Workshop companion</div>
+      <h1>Spring Revolution <em>Dashboard</em></h1>
+      <div class="byline">by Stan</div>
+      <p>Where the revolution stands, in public figures cited to source, and the instruments the room will use to argue about what should change. No individual is named.</p>
+    </div>
+    <div class="daycount">
+      <div class="lab">Day of the revolution</div>
+      <div class="big num" id="daynum">—</div>
+      <div class="asof">Figures as of <b>23 Sep 2026</b></div>
+    </div>
+  </header>
+  <div class="ticker" id="ticker"><span class="dot"></span><q id="tq"></q><span class="who" id="tw"></span></div>
+
+  <nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
+    <button class="tab" role="tab" aria-selected="true" data-tab="pulse"><span class="k">01</span>Pulse</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="timeline"><span class="k">02</span>Timeline</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="ground"><span class="k">03</span>Ground</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="actors"><span class="k">04</span>Actors</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="means"><span class="k">05</span>Means</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="tensions"><span class="k">06</span>Tensions</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="scenarios"><span class="k">07</span>Scenarios</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="recalibrate"><span class="k">08</span>Recalibrate</button>
+  </nav>
+
+  <!-- 01 PULSE -->
+  <section class="panel" id="p-pulse" role="tabpanel">
+    <div class="grid g6">
+      <div class="card tile c-crit"><div class="label">Killed since the coup <span class="pill crit">AAPP</span></div><div class="value num">8,420</div><div class="note">Verified. AAPP says the true number is far higher; ACLED counts 89–96k dead on all sides.</div></div>
+      <div class="card tile c-crit"><div class="label">Still detained <span class="pill crit">AAPP</span></div><div class="value num">22,697</div><div class="note">Of 31,965 arrested. 4,278 are women; 2,237 have died in custody.</div></div>
+      <div class="card tile c-hum"><div class="label">Displaced inside Myanmar <span class="pill">UNHCR</span></div><div class="value num">4.03<small>M</small></div><div class="note">August 2026. OCHA's mid-year planning figure was 3.8M.</div></div>
+      <div class="card tile c-hum"><div class="label">Refugees abroad <span class="pill">UNHCR</span></div><div class="value num">1.63<small>M</small></div><div class="note">74% in Bangladesh. 16.2M people in need at home.</div></div>
+      <div class="card tile c-res"><div class="label">Territory held by resistance <span class="pill acc">ISP</span></div><div class="value num">37.8<small>%</small></div><div class="note">Borderland-heavy. 101 towns lost by the military; 22 since recovered.</div></div>
+      <div class="card tile c-junta"><div class="label">Parliament, military-aligned <span class="pill">ICG</span></div><div class="value num">86<small>%</small></div><div class="note">USDP 339 of 420 contested seats plus the 25% appointed bloc.</div></div>
+    </div>
+
+    <div class="card daily mt">
+      <div class="t">Every day, on average<small>since 1 Feb 2021</small></div>
+      <div class="items" id="daily"></div>
+    </div>
+
+    <div class="grid g21 mt">
+      <div class="card">
+        <h3>Verified killings, cumulative</h3>
+        <p class="sub">AAPP count of people killed by the military and allied groups. Hover for values.</p>
+        <svg class="chart" id="killed-chart" viewBox="0 0 720 260" role="img" aria-label="Cumulative verified killings rising from zero in February 2021 to 8,420 in September 2026"></svg>
+        <div class="src">AAPP daily briefings. 31 Dec 2024 (6,087) and 23 Sep 2026 (8,420) confirmed; earlier anniversary points approximate. 2025 alone: 1,514 verified, 3,220 reported (OHCHR).</div>
+      </div>
+      <div class="card">
+        <h3>The deadliest year for children</h3>
+        <p class="sub">OHCHR's 2025 annual update, verified figures.</p>
+        <div class="hbars">
+          <div class="hb"><span class="l">Children killed</span><span class="b"><i style="width:100%;--c:var(--s-crit)"></i></span><span class="v">287</span></div>
+          <div class="hb"><span class="l">By airstrike</span><span class="b"><i style="width:81%;--c:var(--s-crit)"></i></span><span class="v">232</span></div>
+          <div class="hb"><span class="l">Women killed</span><span class="b"><i style="width:100%;--c:var(--s-crit);opacity:.6"></i></span><span class="v">508</span></div>
+        </div>
+        <div class="kv">
+          <b>982</b><span>civilians killed by airstrikes in 2025, up 52% on 2024</span>
+          <b>231</b><span>attacks on religious sites; 111 on schools; 70+ on health facilities</span>
+          <b>309</b><span>paramotor attacks, a new low-cost weapon of the year</span>
+        </div>
+        <div class="src">OHCHR Annual Update on Myanmar, Feb 2026</div>
+      </div>
+    </div>
+
+    <div class="grid g3 mt">
+      <div class="card">
+        <h3>Humanitarian response, 2026</h3>
+        <p class="sub">Funding and reach against the Humanitarian Needs and Response Plan.</p>
+        <div class="meter" title="43% funded"><i style="width:43%"></i><em style="left:58.5%" title="Prioritised requirement $521M"></em></div>
+        <div class="kv">
+          <b>$382M</b><span>received of $890M required (43%)</span>
+          <b>4.9M</b><span>people targeted; 2.6M hyper-prioritised</span>
+          <b>1.6M</b><span>reached by end of March (33% of target)</span>
+          <b>15.1M</b><span>people living under $4.20 a day (World Bank)</span>
+        </div>
+        <div class="src">OCHA Update No. 52, Jul 2026 · World Bank MPO, Apr 2026</div>
+      </div>
+      <div class="card">
+        <h3>The economy underneath</h3>
+        <p class="sub">GDP growth by fiscal year, World Bank. 2025 also brought the earthquake and fuel shocks.</p>
+        <svg class="chart" id="econ-chart" viewBox="0 0 320 160" role="img" aria-label="GDP growth: minus 12 percent in 2021-22, plus 4.7, plus 1.0, minus 1.0, minus 2.0 estimated, plus 2.0 forecast"></svg>
+        <div class="src">World Bank Macro Poverty Outlook, Apr 2026 · ISP: 16% cumulative contraction since 2020; 92% of households hit by blocked trade</div>
+      </div>
+      <div class="card">
+        <h3>Information space</h3>
+        <p class="sub">The digital coup keeps pace with the physical one.</p>
+        <div class="kv">
+          <b>166/180</b><span>World Press Freedom Index rank, 2026 (RSF)</span>
+          <b>226</b><span>journalists arrested since the coup; 38–41 still held</span>
+          <b>20,000+</b><span>people detained for online content, 2024–May 2026 (ACLED)</span>
+          <b>12+</b><span>townships under communication blackouts in one quarter of 2026</span>
+        </div>
+        <div class="src">RSF · OHCHR · ACLED · Myanmar Internet Project Q1 2026. IMEI tracking and the Person Scrutinization and Monitoring System went live in 2026.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 TIMELINE -->
+  <section class="panel" id="p-timeline" role="tabpanel" hidden>
+    <div class="sec-head"><h2>Six phases, twenty-two turning points</h2><p>The band under the line names the phase as analysts describe it. Click any point; the card explains why it mattered for strategy, which is the question for the wall exercise.</p></div>
+    <div class="filters" id="tl-filters"></div>
+    <div class="card">
+      <div class="tl-wrap"><svg class="tl" id="tl" viewBox="0 0 1100 230" role="img" aria-label="Timeline of key events from the February 2021 coup to September 2026 with phase bands"></svg></div>
+      <div class="ev-card" id="ev-card"></div>
+    </div>
+    <div class="ev-list" id="ev-list"></div>
+  </section>
+
+  <!-- 03 GROUND -->
+  <section class="panel" id="p-ground" role="tabpanel" hidden>
+    <div class="sec-head"><h2>Who holds the ground</h2><p>A tile cartogram of the fourteen states and regions plus the capital, shaded by a qualitative reading of effective control in 2026. Tap a tile. It is a synthesis, not a survey map.</p></div>
+    <div class="carto-wrap">
+      <div class="card">
+        <svg class="carto" id="carto" viewBox="0 0 560 560" role="img" aria-label="Tile map of Myanmar states and regions coloured by control"></svg>
+        <div class="carto-key"><span><i style="background:var(--s-res)"></i>Largely resistance / EAO</span><span><i style="background:var(--s-hum)"></i>Contested, resistance rural</span><span><i style="background:var(--s-junta);opacity:.7"></i>Regime core</span><span><i style="background:var(--ink-3)"></i>Ceasefire / third-party</span></div>
+        <div class="src">Synthesised from ISP-Myanmar SoM 2026 and ST-04, ICG B188, Jamestown, BNI reporting. Township-level control shifts weekly.</div>
+      </div>
+      <div class="card region" id="region"></div>
+    </div>
+    <div class="grid g3 mt">
+      <div class="card">
+        <h3>Towns changing hands</h3>
+        <p class="sub">Of 101 towns the military lost since the coup, it has taken back 22. The pace is rising.</p>
+        <svg class="chart" id="towns-chart" viewBox="0 0 320 120" role="img" aria-label="Towns retaken by the military: 4 in 2024, 10 in 2025, 8 in the first half of 2026"></svg>
+        <div class="src">ISP-Myanmar ST-04, Jul 2026. Khampat, the India trade hub, fell on 20 Jun 2026.</div>
+      </div>
+      <div class="card">
+        <h3>Spillover: where Myanmar's refugees are</h3>
+        <p class="sub">1.63 million refugees and asylum seekers, 31 Aug 2026.</p>
+        <div class="hbars">
+          <div class="hb"><span class="l">Bangladesh</span><span class="b"><i style="width:100%"></i></span><span class="v">1,204,500</span></div>
+          <div class="hb"><span class="l">Malaysia</span><span class="b"><i style="width:17%"></i></span><span class="v">202,500</span></div>
+          <div class="hb"><span class="l">Thailand</span><span class="b"><i style="width:11%"></i></span><span class="v">136,500</span></div>
+          <div class="hb"><span class="l">India</span><span class="b"><i style="width:7%"></i></span><span class="v">87,500</span></div>
+        </div>
+        <div class="src">UNHCR Myanmar situation portal. 150,000 Rohingya fled to Bangladesh in the 18 months to end-2025; 600+ died at sea in 2025 (OHCHR).</div>
+      </div>
+      <div class="card">
+        <h3>Governing without a state</h3>
+        <p class="sub">What liberated areas actually run, and why the federal question cannot wait.</p>
+        <div class="kv">
+          <b>Karenni</b><span>Interim Executive Council administers most of Kayah</span>
+          <b>Chin</b><span>Chinland Council and Interim Chin National Consultative Council, rival frameworks</span>
+          <b>Rakhine</b><span>Arakan People's Authority in 14 of 17 townships</span>
+          <b>Anyar</b><span>NUG township administrations and PDF-run services in Sagaing and Magway, under the heaviest airstrikes</span>
+          <b>North</b><span>KIO administration in Kachin; MNDAA and TNLA zones frozen by ceasefire</span>
+        </div>
+        <div class="src">ISP-Myanmar federal-unit governance series; ICG</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 ACTORS -->
+  <section class="panel" id="p-actors" role="tabpanel" hidden>
+    <div class="sec-head"><h2>The constellation</h2><p>Solid lines are alliance or coordination, dashed blue are China-brokered ceasefires, dotted red is active war. Click a node to see its 2026 position and the question it faces.</p></div>
+    <div class="actor-wrap">
+      <div class="card"><svg class="actors" id="actors" viewBox="0 0 640 540"></svg>
+        <div class="legend"><span><i style="background:var(--s-res)"></i>Resistance, political</span><span><i style="background:var(--s-hum)"></i>Ethnic armed organisation</span><span><i style="background:var(--s-junta)"></i>Regime</span><span><i style="background:var(--ink-3)"></i>External</span></div>
+      </div>
+      <div class="card actor-detail" id="actor-detail"></div>
+    </div>
+  </section>
+
+  <!-- 05 MEANS -->
+  <section class="panel" id="p-means" role="tabpanel" hidden>
+    <div class="sec-head"><h2>Means: money, bodies, aircraft</h2><p>Wars of attrition are decided by what each side can replace. These are the replacement rates, as far as public sources allow.</p></div>
+    <div class="grid g3">
+      <div class="card">
+        <h3>Conscription arithmetic</h3>
+        <p class="sub">Since the law was activated in Feb 2024, per Progressive Voice's 2026 report.</p>
+        <svg class="chart" id="consc-chart" viewBox="0 0 320 170" role="img" aria-label="135,000 conscripted; losses of about 54,000: 20,383 killed, 9,792 wounded, 3,874 defected, 20,000 deserted"></svg>
+        <div class="src">Progressive Voice via Burma Coup Resistance Notes, Sep 2026. OHCHR's lower estimate: 95,000 conscripted to end-2025.</div>
+      </div>
+      <div class="card">
+        <h3>Air power, the regime's one growing asset</h3>
+        <p class="sub">Aerial attacks and the people they killed.</p>
+        <div class="kv">
+          <b>5,608</b><span>aerial attacks recorded in 2025, killing ≈2,181 civilians (BMC)</span>
+          <b>982</b><span>airstrike civilian deaths verified by OHCHR in 2025, from 641 in 2024</span>
+          <b>1,700+</b><span>strikes in the central regions alone</span>
+          <b>153</b><span>killed in six 2026 strikes on resistance-run detention sites (ACLED)</span>
+        </div>
+        <div class="src">ICG: China supplied fighters, drones and counter-drone systems in 2025–26; the KIA downed a Y-12 over the Irrawaddy in Sep 2026.</div>
+      </div>
+      <div class="card">
+        <h3>Who pays for what</h3>
+        <p class="sub">Two money supplies, moving in opposite directions.</p>
+        <div class="hbars">
+          <div class="hb"><span class="l">Regime gas revenue / yr</span><span class="b"><i style="width:100%;--c:var(--s-junta)"></i></span><span class="v">$1B+</span></div>
+          <div class="hb"><span class="l">HNRP 2026 required</span><span class="b"><i style="width:89%;--c:var(--s-hum)"></i></span><span class="v">$890M</span></div>
+          <div class="hb"><span class="l">HNRP received</span><span class="b"><i style="width:38%;--c:var(--s-hum)"></i></span><span class="v">$382M</span></div>
+          <div class="hb"><span class="l">US aid cancelled, 2025</span><span class="b"><i style="width:26%;--c:var(--s-crit)"></i></span><span class="v">$259M</span></div>
+        </div>
+        <div class="kv" style="margin-top:12px">
+          <b>26%</b><span>of all grant aid to Myanmar came from the US before the 2025 cuts; 23 of 26 USAID awards cancelled</span>
+          <b>$1.1B</b><span>projected US funding withdrawn over four years, $181M of it for democracy and media</span>
+        </div>
+        <div class="src">Human Rights Watch via Asia Times, May 2026 · Human Rights Myanmar, Mar 2025 · OCHA</div>
+      </div>
+    </div>
+    <p class="caveat">Rare earths, jade, timber and the scam economy are all documented as funding armed actors on several sides, but no public source gives a defensible annual figure, so they are not charted. ISP's phrase for it is a conflict economy that "flourishes unchecked".</p>
+  </section>
+
+  <!-- 06 TENSIONS -->
+  <section class="panel" id="p-tensions" role="tabpanel" hidden>
+    <div class="sec-head"><h2>Polarities to manage, not arguments to win</h2><p>Slide to where you stand today. Each row carries the evidence for both poles from this dashboard. Positions save only in this browser; for a room-wide spectrum, read them out and mark the floor.</p></div>
+    <div class="pol" id="pol"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn" id="pol-reset">Reset to centre</button><button class="btn" id="pol-copy">Copy my positions</button><span id="pol-msg" style="font-size:12.5px;color:var(--ink-3);align-self:center"></span></div>
+  </section>
+
+  <!-- 07 SCENARIOS -->
+  <section class="panel" id="p-scenarios" role="tabpanel" hidden>
+    <div class="sec-head"><h2>Which future is the evidence pointing to?</h2><p>ISP-Myanmar's three 2026 scenarios, scored live by the signposts the room ticks. Below, the same material arranged as three horizons for the backcasting session.</p></div>
+    <div class="scen" id="scen"></div>
+    <div class="signs"><div class="list" id="signs"></div></div>
+    <div class="horizon">
+      <div class="card"><div class="h">Horizon 1 · What is fading</div><ul><li>Large-scale resistance offensives, stalled by ammunition depletion</li><li>Western democracy and media funding at 2024 levels</li><li>The idea that recognition of the NUG follows from moral clarity</li><li>Junta legitimacy claims resting on the 2008 constitution alone</li></ul></div>
+      <div class="card"><div class="h">Horizon 2 · What is in transition</div><ul><li>China's mediation as the only functioning table</li><li>SCEF as the resistance's political address, still without the AA</li><li>Conscripted armies on the line, unwilling and undertrained</li><li>Aid routed through resistance administrations by necessity</li></ul></div>
+      <div class="card"><div class="h">Horizon 3 · What is emerging</div><ul><li>Federal units governing before a federal constitution exists</li><li>A fourth-generation officer class with its own calculus</li><li>Regional states treating Myanmar as a security file, not a democracy file</li><li>A diaspora economy and civic tech that outlast any battlefield cycle</li></ul></div>
+    </div>
+  </section>
+
+  <!-- 08 RECALIBRATE -->
+  <section class="panel" id="p-recalibrate" role="tabpanel" hidden>
+    <div class="sec-head"><h2>Recalibrate</h2><p>First, guess before you look: six numbers, one slider each. Then the assumption cards. The gap between guess and record is the workshop's real subject.</p></div>
+    <div class="card calscore"><div class="n num" id="calscore">—</div><p id="caltext">Calibration score appears after your first reveal. 100 means every guess was within 10% of the record.</p></div>
+    <div class="cal" id="cal"></div>
+    <h2 style="font-size:20px;margin:28px 0 12px">Assumption audit</h2>
+    <div class="flip-grid" id="flips"></div>
+    <div class="own"><input id="own-a" placeholder="What we believed in 2022…" aria-label="2022 assumption"><input id="own-b" placeholder="What 2026 tells us…" aria-label="2026 reality"><button class="btn primary" id="own-add">Add</button></div>
+    <div class="own-list" id="own-list"></div>
+  </section>
+
+  <footer class="foot">
+    <h3>Sources</h3>
+    <ul>
+      <li><a href="https://aappb.org/daily-23-9-2026/">AAPP Daily Briefing, 23 Sep 2026</a> — killed, arrested, detained</li>
+      <li><a href="https://bangkok.ohchr.org/sites/default/files/documents/2026-02/ohchr_myanmar_annual_update_2025.pdf">OHCHR Annual Update on Myanmar 2025, Feb 2026</a> — children, airstrikes, custody deaths, journalists</li>
+      <li><a href="https://www.unocha.org/publications/report/myanmar/myanmar-humanitarian-update-no-52-13-july-2026">OCHA Humanitarian Update No. 52, 13 Jul 2026</a> — need, targets, funding</li>
+      <li><a href="https://data.unhcr.org/en/situations/myanmar">UNHCR Myanmar situation portal, Aug 2026</a> — IDPs, refugees by country</li>
+      <li><a href="https://acleddata.com/report/state-repression-increases-under-myanmar-militarys-new-leadership">ACLED, 27 Jul 2026</a> — mass killings, online detentions, arson</li>
+      <li><a href="https://ispmyanmar.com/som2026/">ISP-Myanmar, State of Myanmar 2025–26</a> and <a href="https://ispmyanmar.com/2026st-04/">ST-04, Jul 2026</a> — territory, towns, economy, scenarios</li>
+      <li><a href="https://www.crisisgroup.org/brf/asia-pacific/myanmar-china/b188-myanmars-new-administration-military-consolidation-not-transition">International Crisis Group B188, 3 Jun 2026</a> — election, cabinet, China</li>
+      <li><a href="https://thedocs.worldbank.org/en/doc/c6aceb75bed03729ef4ff9404dd7f125-0500012021/related/mpo-mmr.pdf">World Bank Macro Poverty Outlook, Apr 2026</a> — GDP, poverty, inflation</li>
+      <li><a href="https://rsf.org/en/country/myanmar">RSF Myanmar country page, 2026</a> — press freedom rank, detained journalists</li>
+      <li><a href="https://www.myanmarinternet.info/post/quarterly_feb_apr_2026">Myanmar Internet Project, Digital Coup Quarterly Feb–Apr 2026</a> — blackouts, surveillance</li>
+      <li><a href="https://humanrightsmyanmar.org/america-cuts-1-1-billion-for-myanmar-abandoning-democracy-and-rights/">Human Rights Myanmar, Mar 2025</a> — US aid cuts</li>
+      <li><a href="https://asiatimes.com/2026/05/myanmars-resource-curse-fueling-its-forever-war/">Asia Times, May 2026</a> — gas revenue and the resource economy</li>
+      <li><a href="https://www.irrawaddy.com/news/burma/myanmars-democratic-alliance-pushes-to-unify-scattered-resistance.html">The Irrawaddy, 28 Jul 2026</a> — SCEF, Arakan Army reach</li>
+      <li><a href="https://burmacoupresistancenotes.substack.com/p/burma-coup-resistance-notes-september-860">Burma Coup Resistance Notes, 19 Sep 2026</a> — September operations, conscription report</li>
+      <li><a href="https://en.wikipedia.org/wiki/Airstrikes_in_the_Myanmar_civil_war_(2021%E2%80%93present)">Airstrikes in the Myanmar civil war, Wikipedia (BMC and RFA tallies)</a></li>
+      <li><a href="https://en.wikipedia.org/wiki/Myanmar_civil_war_(2021%E2%80%93present)">Myanmar civil war (2021–present), Wikipedia</a> — milestone dates, ACLED total-deaths estimate</li>
+    </ul>
+    <p class="caveat">Built for the "Recalibrating the Spring Revolution" political exchange workshop. Guesses, sliders, signposts and added assumptions stay in your own browser and are not shared. Figures update on different cycles; where sources disagree, both are shown.</p>
+  </footer>
+</div>
+<div class="tip" id="tip"></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const tip=$('#tip');
+function showTip(e,html){tip.innerHTML=html;tip.style.left=e.clientX+'px';tip.style.top=(e.clientY-8)+'px';tip.classList.add('on')}
+function hideTip(){tip.classList.remove('on')}
+const ls={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const NS='http://www.w3.org/2000/svg';
+const el=(t,a={},txt)=>{const n=document.createElementNS(NS,t);for(const k in a)if(a[k]!=null)n.setAttribute(k,a[k]);if(txt!=null)n.textContent=txt;return n};
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- day counter & daily rates ---------- */
+const coup=new Date('2021-02-01T00:00:00');const today=new Date();
+const days=Math.floor((today-coup)/864e5)+1;$('#daynum').textContent=days.toLocaleString();
+const dataDays=Math.floor((new Date('2026-09-23')-coup)/864e5)+1;
+const rates=[[8420/dataDays,'people killed (AAPP verified)'],[31965/dataDays,'people arrested'],[4031000/dataDays,'people newly displaced, net'],[125000/dataDays,'homes burned (ACLED)']];
+$('#daily').innerHTML=rates.map(([v,l])=>`<div class="it"><b class="num">${v>=100?Math.round(v).toLocaleString():v.toFixed(1)}</b><span>${l}</span></div>`).join('');
+
+/* ---------- ticker ---------- */
+const QUOTES=[['The actual numbers are likely much higher.','AAPP, on its own verified counts'],['Sporadic but more intense: a strategic stalemate where neither side can achieve decisive victory.','ISP-Myanmar, State of Myanmar 2025–26'],['Military consolidation, not transition.','International Crisis Group, June 2026'],['The deadliest year for children since the coup.','OHCHR, on 2025'],['Resistance forces secured historic territorial gains but failed to translate military success into political alternatives.','ISP-Myanmar'],['May 2026 saw the highest level of direct attacks on civilians since February 2024.','ACLED, July 2026'],['Nearly half the country is experiencing warlordism beyond effective central authority.','ISP-Myanmar']];
+let qi=0;function tick(){const [q,w]=QUOTES[qi%QUOTES.length];$('#tq').textContent=q;$('#tw').textContent='— '+w;qi++}
+tick();if(!reduced)setInterval(tick,9000);
+
+/* ---------- petals ---------- */
+(function(){
+ const c=$('#petals');const ctx=c.getContext('2d');let W,H,P=[];
+ function size(){W=c.width=innerWidth*devicePixelRatio;H=c.height=innerHeight*devicePixelRatio;c.style.width=innerWidth+'px';c.style.height=innerHeight+'px'}
+ size();addEventListener('resize',size);
+ const N=innerWidth<600?14:28;
+ for(let i=0;i<N;i++)P.push({x:Math.random(),y:Math.random(),r:(3+Math.random()*4)*devicePixelRatio,vy:(.00012+Math.random()*.00018),vx:(Math.random()-.5)*.00008,a:Math.random()*6.28,va:(Math.random()-.5)*.01,o:.25+Math.random()*.35});
+ function col(){return getComputedStyle(document.documentElement).getPropertyValue('--petal').trim()||'232,185,58'}
+ function draw(){ctx.clearRect(0,0,W,H);const cc=col();P.forEach(p=>{ctx.save();ctx.translate(p.x*W,p.y*H);ctx.rotate(p.a);ctx.fillStyle=`rgba(${cc},${p.o})`;ctx.beginPath();ctx.ellipse(0,0,p.r*1.6,p.r*.8,0,0,6.28);ctx.fill();ctx.restore();
+  if(!reduced){p.y+=p.vy;p.x+=p.vx+Math.sin(p.a)*.00004;p.a+=p.va;if(p.y>1.05){p.y=-.05;p.x=Math.random()}if(p.x<-.05)p.x=1.05;if(p.x>1.05)p.x=-.05}});
+  if(!reduced)requestAnimationFrame(draw)}
+ draw();
+})();
+
+/* ---------- tabs ---------- */
+const TABS=['pulse','timeline','ground','actors','means','tensions','scenarios','recalibrate'];
+const tabs=$$('.tab');
+function go(id){tabs.forEach(t=>t.setAttribute('aria-selected',t.dataset.tab===id));$$('.panel').forEach(p=>p.hidden=p.id!=='p-'+id);ls.set('sr-tab',id)}
+tabs.forEach(t=>t.addEventListener('click',()=>go(t.dataset.tab)));
+const h=location.hash.replace('#','');go(TABS.includes(h)?h:(TABS.includes(ls.get('sr-tab'))?ls.get('sr-tab'):'pulse'));
+
+/* ---------- killed chart ---------- */
+(function(){
+const svg=$('#killed-chart');const W=720,H=260,L=56,R=20,T=20,B=36;
+const pts=[{d:'2021-02',v:0,n:'Coup, 1 Feb 2021'},{d:'2022-02',v:1500,a:1,n:'≈ one year on'},{d:'2023-02',v:3000,a:1,n:'≈ two years on'},{d:'2024-02',v:4500,a:1,n:'≈ three years on'},{d:'2024-12',v:6087,n:'31 Dec 2024'},{d:'2026-09',v:8420,n:'23 Sep 2026'}];
+const t0=new Date('2021-01-01'),t1=new Date('2026-12-31');
+const x=d=>L+(new Date(d+'-01')-t0)/(t1-t0)*(W-L-R), y=v=>T+(1-v/9000)*(H-T-B);
+[0,2000,4000,6000,8000].forEach(v=>{svg.append(el('line',{x1:L,x2:W-R,y1:y(v),y2:y(v),class:'grid'}));svg.append(el('text',{x:L-8,y:y(v)+4,'text-anchor':'end'},v.toLocaleString()))});
+for(let yr=2021;yr<=2026;yr++){const xx=x(yr+'-01');svg.append(el('text',{x:xx+4,y:H-12,class:'lbl'},yr))}
+// phase shading: Operation 1027 and earthquake markers
+[['2023-10','Op. 1027'],['2025-03','Earthquake'],['2026-01','Election']].forEach(([d,l])=>{svg.append(el('line',{x1:x(d),x2:x(d),y1:T,y2:y(0),stroke:'var(--axis)','stroke-dasharray':'3 4'}));svg.append(el('text',{x:x(d)+4,y:T+10},l))});
+svg.append(el('line',{x1:L,x2:W-R,y1:y(0),y2:y(0),class:'axis'}));
+const path=pts.map((p,i)=>(i?'L':'M')+x(p.d)+','+y(p.v)).join(' ');
+svg.append(el('path',{d:path+` L${x('2026-09')},${y(0)} L${x('2021-02')},${y(0)} Z`,fill:'var(--s-crit)',opacity:'.10'}));
+svg.append(el('path',{d:path,fill:'none',stroke:'var(--s-crit)','stroke-width':'2','stroke-linejoin':'round'}));
+pts.forEach(p=>{const c=el('circle',{cx:x(p.d),cy:y(p.v),r:p.a?4:5,fill:p.a?'var(--surface)':'var(--s-crit)',stroke:'var(--s-crit)','stroke-width':'2'});
+ const hit=el('circle',{cx:x(p.d),cy:y(p.v),r:16,fill:'transparent'});
+ hit.addEventListener('mousemove',e=>showTip(e,`<b>${p.v.toLocaleString()}</b> killed<br>${p.n}${p.a?' (approx.)':''}`));hit.addEventListener('mouseleave',hideTip);
+ svg.append(c,hit)});
+svg.append(el('text',{x:x('2026-09')-8,y:y(8420)-12,'text-anchor':'end',class:'strong'},'8,420'));
+svg.append(el('text',{x:x('2024-12')-8,y:y(6087)-12,'text-anchor':'end',class:'lbl'},'6,087'));
+})();
+
+/* ---------- econ chart: GDP by FY ---------- */
+(function(){
+const svg=$('#econ-chart');const rows=[['21/22',-12],['22/23',4.7],['23/24',1],['24/25',-1],['25/26e',-2],['26/27f',2]];
+const L=8,R=8,W=320,zero=70,scale=3.6;const bw=(W-L-R)/rows.length;
+svg.append(el('line',{x1:L,x2:W-R,y1:zero,y2:zero,class:'axis'}));
+rows.forEach(([l,v],i)=>{const x=L+i*bw+6,w=bw-12,h=Math.abs(v)*scale;const neg=v<0;
+ const r=el('rect',{x,y:neg?zero+2:zero-h-2,width:w,height:h,rx:3,fill:neg?'var(--s-crit)':'var(--s-junta)'});
+ r.addEventListener('mousemove',e=>showTip(e,`<b>${v>0?'+':''}${v}%</b> GDP growth, ${l}`));r.addEventListener('mouseleave',hideTip);svg.append(r);
+ svg.append(el('text',{x:x+w/2,y:neg?zero+h+16:zero-h-8,'text-anchor':'middle',class:'strong'},(v>0?'+':'−')+Math.abs(v)+'%'));
+ svg.append(el('text',{x:x+w/2,y:152,'text-anchor':'middle'},'FY'+l))});
+})();
+
+/* ---------- towns chart ---------- */
+(function(){
+const svg=$('#towns-chart');const rows=[['2024',4],['2025',10],['H1 2026',8]];const L=70;
+rows.forEach(([l,v],i)=>{const y=18+i*32;svg.append(el('text',{x:L-10,y:y+13,'text-anchor':'end',class:'lbl'},l));const w=v*18;
+ const r=el('rect',{x:L,y,width:w,height:18,rx:3,fill:'var(--s-junta)'});r.addEventListener('mousemove',e=>showTip(e,`<b>${v}</b> towns retaken by the military, ${l}`));r.addEventListener('mouseleave',hideTip);svg.append(r);
+ svg.append(el('text',{x:L+w+8,y:y+13,class:'strong'},v+(l==='H1 2026'?' (≈16/yr pace)':'')))});
+})();
+
+/* ---------- conscription chart (waffle) ---------- */
+(function(){
+const svg=$('#consc-chart');const total=135000;const parts=[['Killed',20383,'var(--s-crit)'],['Wounded',9792,'var(--s-crit)'],['Deserted',20000,'var(--s-res)'],['Defected',3874,'var(--s-hum)']];
+const cols=25,rows=4,cell=11.5,gap=1.5,unit=total/(cols*rows);let idx=0;
+const seq=[];parts.forEach(([n,v,c])=>{for(let i=0;i<Math.round(v/unit);i++)seq.push({n,c})});
+for(let r=0;r<rows;r++)for(let cI=0;cI<cols;cI++){const s=seq[idx];const rect=el('rect',{x:cI*(cell+gap),y:r*(cell+gap),width:cell,height:cell,rx:2,fill:s?s.c:'var(--s-junta)',opacity:s?'1':'.55'});const lab=s?s.n:'Still in ranks';rect.addEventListener('mousemove',e=>showTip(e,`<b>≈${Math.round(unit).toLocaleString()}</b> conscripts · ${lab}`));rect.addEventListener('mouseleave',hideTip);svg.append(rect);idx++}
+let ly=76;const leg=[...parts.map(p=>[p[0],p[1],p[2]]),['Remaining in ranks',total-parts.reduce((a,p)=>a+p[1],0),'var(--s-junta)']];
+leg.forEach(([n,v,c],i)=>{const x=(i%3)*106,y=ly+Math.floor(i/3)*20;svg.append(el('rect',{x,y:y-9,width:9,height:9,rx:2,fill:c,opacity:n.startsWith('Remaining')?'.55':'1'}));svg.append(el('text',{x:x+13,y,class:'lbl'},`${n} ${v.toLocaleString()}`))});
+svg.append(el('text',{x:0,y:140,class:'strong'},'135,000 conscripted · each square ≈ 1,350 people'));
+svg.append(el('text',{x:0,y:158},'40% lost to death, injury, desertion or defection'));
+})();
+
+/* ---------- cartogram ---------- */
+const RG=[
+{id:'kachin',n:'Kachin',c:2,r:0,st:'con',s:'KIO strongholds and most of the countryside; the military holds Myitkyina and Bhamo under pressure. In Sep 2026 the KIA cut Irrawaddy supply lines and seized a border base. Rare-earth mining zones near the Chinese border are a prize for every side.',q:'What does the KIO owe SCEF, and what does SCEF owe the KIO?'},
+{id:'sagaing',n:'Sagaing',c:1,r:1,st:'con',s:'The heart of Anyar resistance and of the airstrike campaign. PDF and NUG township administrations run rural areas; the military took back Khampat in June 2026 and towns along the Mandalay corridor. Roughly 40% of 2026 mass-killing deaths were here and in Magway.',q:'Can a rural-held region be governed while its towns are bombed?'},
+{id:'shan_n',n:'Shan (North)',c:3,r:1,st:'cf',s:'Where China redrew the map. MNDAA returned Lashio in Apr 2025 and, with the TNLA, sits under a Beijing-brokered ceasefire. The 2026 Kutkai fighting shows how brittle those lines are.',q:'Is a frozen front a loss, a pause, or a new border?'},
+{id:'chin',n:'Chin',c:0,r:2,st:'res',s:'Chin forces hold most of the state outside Hakha and Falam, under two rival interim frameworks. Refugee flows into Mizoram make India a stakeholder.',q:'Which Chin framework does the federal project recognise?'},
+{id:'mandalay',n:'Mandalay',c:2,r:2,st:'con',s:'The military retook Thabeikkyin, Singu and Tagaung in 2026 and partly reopened the Mandalay–Muse trade route. The 2025 earthquake hit here hardest. Countryside contested; the city under tight surveillance.',q:'What did the earthquake change about legitimacy in the centre?'},
+{id:'shan_s',n:'Shan (S & E)',c:4,r:2,st:'cf',s:'UWSA territory and regime-held towns; largely outside the war by choice. The UWSA has been pressed by Beijing to stop supplying the resistance.',q:'What price would bring the Wa in?'},
+{id:'magway',n:'Magway',c:1,r:3,st:'con',s:'Anyar’s second front. Rural PDF control, heavy arson, oil fields that fund the regime. Expressway ambushes in Sep 2026 show reach into regime logistics.',q:'Who owns the oil when the war ends?'},
+{id:'npt',n:'Naypyitaw',c:2,r:3,st:'reg',s:'Seat of the new administration and the parliament that convened in March 2026. Drone strikes have reached it; control has not been contested on the ground.',q:'What does a capital signify when it governs a third of the country?'},
+{id:'kayah',n:'Kayah (Karenni)',c:3,r:3,st:'res',s:'The Interim Executive Council administers most of the state; the military holds Loikaw under siege conditions. The most advanced experiment in resistance governance.',q:'Is Karenni the model or the exception?'},
+{id:'rakhine',n:'Rakhine',c:0,r:4,st:'res',s:'The Arakan Army holds 14 of 17 townships; Sittwe and Kyaukphyu remain regime enclaves. The AA is the country’s most powerful armed group, engaged by SCEF but not in it. Rohingya displacement continues in both directions.',q:'What does a federal union offer a state that has already won?'},
+{id:'bago',n:'Bago',c:2,r:4,st:'con',s:'Regime-held corridor with PDF activity in the west and KNU in the east; ambushes on the Yangon–Mandalay expressway in Sep 2026.',q:'How exposed is the regime’s spine?'},
+{id:'kayin',n:'Kayin (Karen)',c:3,r:4,st:'con',s:'KNU districts, Myawaddy trade and scam-centre politics with the BGF. Three months of heavy fighting in Mutraw in 2026.',q:'Can the KNU hold both the border economy and the moral high ground?'},
+{id:'ayeyarwady',n:'Ayeyarwady',c:1,r:5,st:'reg',s:'The delta is regime core, with AA incursions in the northwest in 2026 and blackouts in five townships. The rice bowl the regime cannot afford to lose.',q:'What happens if the AA reaches the delta?'},
+{id:'yangon',n:'Yangon',c:2,r:5,st:'reg',s:'Regime core, the CDM’s birthplace, and the most surveilled city in the country. Underground networks persist; open protest does not.',q:'What does the urban movement need from the borderlands?'},
+{id:'mon',n:'Mon',c:3,r:6,st:'con',s:'Regime towns, NMSP ambivalence, and PDF activity around Bilin and Ye. A quiet front that matters for the southern corridor.',q:'Where does Mon politics sit in a Karen-Karenni-Bamar alliance?'},
+{id:'tanintharyi',n:'Tanintharyi',c:3,r:7,st:'con',s:'Long coastline, resistance-held countryside, regime-held Dawei and Myeik. Thai border trade and gas pipelines run through it.',q:'Whose gas, whose coast?'}
+];
+const STC={res:'var(--s-res)',con:'var(--s-hum)',reg:'var(--s-junta)',cf:'var(--ink-3)'};
+const STN={res:'Largely resistance / EAO',con:'Contested, resistance rural',reg:'Regime core',cf:'Ceasefire / third-party'};
+(function(){
+ const svg=$('#carto');const S=100,G=8,ox=20,oy=20;
+ RG.forEach(rg=>{const g=el('g',{class:'t'});g.dataset.id=rg.id;const x=ox+rg.c*(S+G),y=oy+rg.r*(S-32);
+  const rect=el('rect',{x,y,width:S,height:S-40,fill:STC[rg.st],opacity:rg.st==='reg'?'.7':'1'});
+  g.append(rect,el('text',{x:x+S/2,y:y+28},rg.n),el('text',{x:x+S/2,y:y+44,class:'s'},{res:'Resistance',con:'Contested',reg:'Regime core',cf:'Ceasefire'}[rg.st]));
+  g.addEventListener('click',()=>selR(rg.id));svg.append(g)});
+ function selR(id){$$('#carto .t').forEach(t=>t.classList.toggle('sel',t.dataset.id===id));const r=RG.find(x=>x.id===id);
+  $('#region').innerHTML=`<div class="eyebrow">State / region</div><h3>${r.n}</h3><div class="st" style="color:${STC[r.st]}">${STN[r.st]}</div><p>${r.s}</p><div class="src" style="border-left:2px solid var(--accent);padding-left:10px;margin-top:12px;color:var(--ink-2);font-family:var(--body);font-size:13px">For the room: ${r.q}</div>`}
+ selR('rakhine');
+})();
+
+/* ---------- timeline ---------- */
+const CATS={mil:{n:'Military',c:'var(--s-crit)'},pol:{n:'Political',c:'var(--s-res)'},hum:{n:'Humanitarian',c:'var(--s-hum)'},intl:{n:'International',c:'var(--s-junta)'}};
+const PH=[['2021-02-01','2021-09-01','Uprising & CDM'],['2021-09-01','2023-10-27','Armed turn & attrition'],['2023-10-27','2025-01-01','Breakthrough: Op. 1027'],['2025-01-01','2025-12-28','China’s hand, the quake'],['2025-12-28','2026-04-11','Staged election'],['2026-04-11','2026-12-31','Consolidation']];
+const EV=[
+{d:'2021-02-01',t:'The coup',k:'pol',s:'The military detains the elected government and forms the State Administration Council. Mass protests and the Civil Disobedience Movement follow within days.',w:'Set the movement’s founding assumption: that mass non-cooperation could make the country ungovernable.'},
+{d:'2021-04-16',t:'National Unity Government formed',k:'pol',s:'Ousted lawmakers and ethnic representatives announce a parallel government. The People’s Defence Force follows on 5 May.',w:'Created a single address for the world, and a permanent argument about whether it speaks for the whole resistance.'},
+{d:'2021-09-07',t:'People’s defensive war declared',k:'mil',s:'The NUG calls for nationwide armed resistance; PDF units multiply across Sagaing, Magway and the borderlands.',w:'Turned a civic uprising into a war of attrition the regime was built to fight.'},
+{d:'2021-12-24',t:'Mo So massacre',k:'mil',s:'More than 35 civilians, including aid workers, killed and burned in Kayah State.',w:'Established the regime’s pattern of collective punishment and the humanitarian sector’s exposure.'},
+{d:'2022-07-23',t:'First executions in decades',k:'pol',s:'The regime executes four political prisoners, including Zayar Thaw and Ko Jimmy.',w:'Closed the door on negotiated de-escalation in the movement’s eyes.'},
+{d:'2023-10-27',t:'Operation 1027',k:'mil',s:'The Three Brotherhood Alliance launches its northern Shan offensive. Laukkai falls in January 2024; the Arakan Army reopens its front in November 2023.',w:'Proved the military could lose territory at scale, and that EAOs, not PDFs, would decide where.'},
+{d:'2024-02-10',t:'Conscription law activated',k:'pol',s:'The regime enforces the 2010 conscription law. Progressive Voice later documents around 135,000 conscripted with heavy losses and desertions.',w:'Bought the regime bodies at the price of a generation’s exodus and a new stream of defections.'},
+{d:'2024-08-03',t:'Lashio falls',k:'mil',s:'The MNDAA captures the North-Eastern Command headquarters, the first regional command lost since the coup.',w:'The high-water mark of the northern offensive, and the moment Beijing decided it had gone far enough.'},
+{d:'2024-12-20',t:'Arakan Army takes Ann',k:'mil',s:'Western Command falls. By 2026 the AA holds 14 of Rakhine’s 17 townships.',w:'Produced the country’s first near-complete ethnic state outside regime control.'},
+{d:'2025-02-01',t:'US aid cuts',k:'intl',s:'23 of 26 USAID awards cancelled; $259M of 2025 aid withdrawn. The US had provided 26% of all grant aid to Myanmar.',w:'Removed the largest single funder of civil society, media and cross-border aid in one quarter.'},
+{d:'2025-03-28',t:'Sagaing earthquake',k:'hum',s:'A magnitude 7.7 quake kills roughly 3,800 people and devastates Mandalay and Sagaing. Both sides announce pauses; airstrikes continue within days.',w:'Showed the regime could absorb foreign relief without conceding access, and gave it a diplomatic opening.'},
+{d:'2025-04-22',t:'Lashio handed back',k:'intl',s:'Under Chinese pressure the MNDAA returns Lashio to the military.',w:'Made explicit that the northern alliance’s gains are held on Beijing’s terms.'},
+{d:'2025-07-31',t:'SAC dissolved, election announced',k:'pol',s:'Power passes to the National Defence and Security Council as the regime prepares a staged election.',w:'Began the conversion of a junta into a nominally civilian administration.'},
+{d:'2025-12-28',t:'Phased election begins',k:'pol',s:'Three rounds run to 25 January 2026. Turnout is 54% where voting happens; large areas cannot vote at all.',w:'Created a legitimacy claim that neighbours, not citizens, would judge.'},
+{d:'2026-01-31',t:'USDP declared winner',k:'pol',s:'The military-backed party takes 339 of 420 contested seats.',w:'Over 86% of parliament military-aligned: a constitution rewritten by arithmetic rather than amendment.'},
+{d:'2026-03-01',t:'SCEF alliance formed',k:'pol',s:'The Steering Council for the Emergence of a Federal Democratic Union brings NUG, CRPH, KIO, KNU, CNF and KNPP under one political roof; it has engaged 14 more groups including the AA.',w:'The resistance’s first serious attempt at a joint political address, five years in.'},
+{d:'2026-03-16',t:'Parliament convenes',k:'pol',s:'The first sitting since the coup, dominated by USDP and military appointees.',w:'Gave ASEAN and Beijing an institution to deal with.'},
+{d:'2026-04-03',t:'Coup leader elected president',k:'pol',s:'Min Aung Hlaing takes office on 11 April with a cabinet carried over from the junta. ICG calls it consolidation, not transition.',w:'Removed the fiction of a transitional junta; the coup is now the state.'},
+{d:'2026-05-15',t:'Attacks on civilians peak',k:'mil',s:'ACLED records the highest level of direct attacks on civilians since February 2024; 450+ killed in mass killings in the first half of the year.',w:'Disproved the hope that an elected face would moderate the campaign in Anyar.'},
+{d:'2026-06-20',t:'Khampat retaken',k:'mil',s:'The military recovers the India border trade hub, its eighth town of the year. It has now recovered 22 of 101 towns lost.',w:'Signalled a strategy of retaking trade corridors and investment zones rather than the whole map.'},
+{d:'2026-07-13',t:'Humanitarian plan 43% funded',k:'hum',s:'$382M of $890M received. 16.2M people in need, 4M displaced, 1.6M reached in the first quarter.',w:'The response now reaches a third of its own target; access, not money alone, is the constraint.'},
+{d:'2026-09-18',t:'Kachin and Arakan counter-offensives',k:'mil',s:'KIA cuts Irrawaddy supply lines near Bhamo and seizes a border base; the AA repels an offensive around Sittwe. The regime’s 2026 campaign yields little new ground.',w:'The stalemate holds in both directions: the regime cannot retake the periphery, the resistance cannot take the centre.'}
+];
+let tlOn=new Set(Object.keys(CATS)), tlSel=EV.length-1;
+const fl=$('#tl-filters');Object.entries(CATS).forEach(([k,c])=>{const b=document.createElement('button');b.className='chip';b.style.setProperty('--c',c.c);b.setAttribute('aria-pressed','true');b.innerHTML=`<i></i>${c.n}`;b.onclick=()=>{tlOn.has(k)?tlOn.delete(k):tlOn.add(k);if(!tlOn.size)tlOn.add(k);b.setAttribute('aria-pressed',tlOn.has(k));drawTL()};fl.append(b)});
+function fmt(d){return new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+function drawTL(){
+ const svg=$('#tl');svg.innerHTML='';const W=1100,L=30,R=30,Y=130;const t0=new Date('2021-01-01'),t1=new Date('2026-12-31');const x=d=>L+(new Date(d)-t0)/(t1-t0)*(W-L-R);
+ PH.forEach(([a,b,n],i)=>{const x1=x(a),x2=x(b);svg.append(el('rect',{x:x1,y:Y+42,width:x2-x1-2,height:22,rx:3,fill:i%2?'var(--surface-2)':'var(--accent-soft)'}));svg.append(el('text',{x:x1+6,y:Y+57,class:'ph'},n))});
+ svg.append(el('line',{x1:L,x2:W-R,y1:Y,y2:Y,class:'axis','stroke-width':'2'}));
+ for(let yr=2021;yr<=2026;yr++){const xx=x(yr+'-01-01');svg.append(el('line',{x1:xx,x2:xx,y1:Y-10,y2:Y+10,class:'axis'}));svg.append(el('text',{x:xx+6,y:Y+32,class:'yr'},yr))}
+ const vis=EV.map((e,i)=>({e,i})).filter(o=>tlOn.has(o.e.k));
+ let lastX=-99,lift=0;
+ vis.forEach(({e,i})=>{const xx=x(e.d);lift=(xx-lastX<22)?lift+1:0;lastX=xx;const yy=Y-20-lift*22;const sel=i===tlSel;
+  svg.append(el('line',{x1:xx,x2:xx,y1:yy,y2:Y,stroke:CATS[e.k].c,opacity:'.5'}));
+  const c=el('circle',{cx:xx,cy:yy,r:sel?9:7,fill:CATS[e.k].c,class:'ev'+(sel?' sel':'')});c.addEventListener('click',()=>{tlSel=i;drawTL()});
+  c.addEventListener('mousemove',ev=>showTip(ev,`<b>${fmt(e.d)}</b><br>${e.t}`));c.addEventListener('mouseleave',hideTip);svg.append(c)});
+ const s=EV[tlSel];$('#ev-card').innerHTML=`<div class="date">${fmt(s.d)}</div><div><h3>${s.t}</h3><p>${s.s}</p><div class="why">Why it mattered for strategy: ${s.w}</div></div>`;
+ $('#ev-list').innerHTML=vis.map(({e,i})=>`<div class="ev-item${i===tlSel?' sel':''}" data-i="${i}" style="--c:${CATS[e.k].c}"><i></i><div><span class="d">${fmt(e.d)}</span>${e.t}</div></div>`).join('');
+ $$('#ev-list .ev-item').forEach(n=>n.onclick=()=>{tlSel=+n.dataset.i;drawTL()});
+}
+drawTL();
+
+/* ---------- actors ---------- */
+const AC=[
+{id:'nug',n:'NUG',g:'res',r:'Parallel civilian government',s:'Formed April 2021. Its ambassador chairs the UN Asia-Pacific caucus in 2026 and it negotiated vocational access in Japan for citizens with expired passports; at home it faces criticism over bureaucracy, transparency and the lack of a coherent political strategy (ICG).',q:'Is it the government of the revolution, or one member of it?'},
+{id:'crph',n:'CRPH',g:'res',r:'Committee of elected lawmakers',s:'Holders of the 2020 mandate and the source of the NUG’s constitutional legitimacy. A core SCEF member.',q:'How long does a 2020 mandate last?'},
+{id:'scef',n:'SCEF',g:'res',r:'Alliance steering council, 2026',s:'Formed March 2026 to unify military, political and administrative efforts toward a federal democratic union. Six objectives including abolishing the 2008 constitution, subordinating the armed forces to elected government and transitional justice. Has engaged 14 further groups.',q:'Can it decide anything the AA and KIO have not already decided?'},
+{id:'pdf',n:'PDFs',g:'res',r:'People’s Defence Forces',s:'Hundreds of local units, strongest in Sagaing, Magway and Bago. September 2026: coordinated attacks on the Yangon–Mandalay expressway and regime convoys; also mine clearance for civilians. Ammunition, not will, is the constraint.',q:'Who supplies them once the northern route is closed?'},
+{id:'cdm',n:'CDM & strike committees',g:'res',r:'Civil resistance base',s:'The movement’s civilian foundation since February 2021; 130,000 teachers were still on strike in 2023. Now squeezed by surveillance, IMEI tracking and 20,000+ online-content detentions.',q:'What does non-cooperation mean in year six?'},
+{id:'kio',n:'KIO / KIA',g:'eao',r:'Kachin',s:'One of the military’s two most capable opponents (ICG). September 2026: cutting Irrawaddy river supply lines, seizing a border base, downing a regime Y-12. Founding SCEF member with its own rare-earth economics.',q:'Partner in a federal union, or sovereign in all but name?'},
+{id:'knu',n:'KNU / KNLA',g:'eao',r:'Karen',s:'Founding SCEF member. Three months of heavy fighting in Mutraw in 2026 (152 killed on its side by its own count); striking regime supply corridors. Entangled with border trade and scam-centre politics.',q:'Can the oldest revolution accept a new one’s constitution?'},
+{id:'cnf',n:'CNF / Chinland',g:'eao',r:'Chin',s:'Founding SCEF member; Chin forces hold most of the state outside Hakha and Falam, under two rival interim frameworks.',q:'Which Chinland does SCEF represent?'},
+{id:'knpp',n:'KNPP / KA',g:'eao',r:'Karenni',s:'Founding SCEF member. Karenni forces and the Interim Executive Council administer most of Kayah, the most advanced resistance governance experiment.',q:'Is the IEC a model others will adopt?'},
+{id:'aa',n:'Arakan Army',g:'eao',r:'Rakhine',s:'The most powerful armed group in the country: 14 of 17 Rakhine townships, Western Command captured in Dec 2024. Engaged by SCEF but not a member; positions with the regime on a ceasefire are far apart; probing the Ayeyarwady delta in 2026.',q:'What does it want from anyone else?'},
+{id:'tnla',n:'TNLA',g:'eao',r:'Ta’ang, northern Shan',s:'Under a China-brokered ceasefire since 2025. Northern Shan is where Chinese pressure has most changed the map.',q:'Ceasefire as breathing space, or as exit?'},
+{id:'mndaa',n:'MNDAA',g:'eao',r:'Kokang',s:'Took Lashio in August 2024, returned it in April 2025 under Chinese pressure; ceasefire since.',q:'Client, ally, or cautionary tale?'},
+{id:'uwsa',n:'UWSA',g:'eao',r:'Wa',s:'The largest armed force outside the military, neutral by policy; pressured by Beijing to curtail weapons sales to the resistance.',q:'What would move the Wa?'},
+{id:'reg',n:'Regime / USDP govt',g:'reg',r:'State power',s:'Min Aung Hlaing became president in April 2026 with a cabinet carried over from the junta and USDP figures in marginal portfolios. Stabilised front lines with conscription, Chinese hardware and airpower; retook 22 of 101 lost towns, prioritising trade corridors and investment zones. Gas revenue over $1B a year.',q:'Does it need to win, or only to outlast?'},
+{id:'cn',n:'China',g:'ext',r:'Decisive external actor',s:'Supplies fighters, drones and counter-drone systems; brokered MNDAA and TNLA ceasefires; forced Lashio’s return; leaned on the UWSA. Its mediation role is the hinge of ISP’s intervention scenario.',q:'What does Beijing want that the resistance could offer?'},
+{id:'asean',n:'ASEAN',g:'ext',r:'Regional bloc',s:'The Five-Point Consensus remains unfulfilled. Malaysia has floated hosting the regime leader to move Rohingya repatriation (scaled back from 5,000 to 1,500 people).',q:'Engagement with the new administration, on whose terms?'},
+{id:'th',n:'Thailand',g:'ext',r:'Neighbour and host',s:'Hosts 136,500 registered refugees and much of the exiled movement; cross-border aid, trade and the southern gas pipelines run through it. Its posture decides what the resistance can sustain.',q:'What does Bangkok need to keep the door open?'},
+{id:'in',n:'India',g:'ext',r:'Northeast neighbour',s:'87,500 refugees in Mizoram and Manipur; Kaladan and Khampat trade interests; talks with the AA on the Rakhine coast.',q:'Security partner of the regime, or of whoever holds the border?'},
+{id:'bd',n:'Bangladesh',g:'ext',r:'Rohingya host',s:'1.2 million refugees, 150,000 new arrivals in 18 months, rations cut by donor withdrawal. Talks with both the regime and the AA about return.',q:'Who can guarantee a return to a state that does not control Rakhine?'},
+{id:'west',n:'US / EU / Japan',g:'ext',r:'Sanctions, aid, recognition',s:'US cuts of $1.1B over four years from 2025 hit humanitarian, media and democracy work; the US has designated Myanmar a major drug and scam-centre host. Japan negotiated vocational access for NUG-documented citizens; the EU and UK sustain sanctions.',q:'Is the West still a variable, or a constant?'}
+];
+const AL=[['scef','nug'],['scef','crph'],['scef','kio'],['scef','knu'],['scef','cnf'],['scef','knpp'],['nug','pdf'],['nug','cdm'],['scef','aa','eng'],['aa','kio'],['cn','reg'],['cn','tnla','cf'],['cn','mndaa','cf'],['cn','uwsa','cf'],['th','nug'],['west','nug'],['asean','reg'],['in','aa','eng'],['bd','aa','eng'],['bd','reg','eng'],['in','reg'],['reg','aa','war'],['reg','kio','war'],['reg','pdf','war'],['reg','knu','war']];
+const GC={res:'var(--s-res)',eao:'var(--s-hum)',reg:'var(--s-junta)',ext:'var(--ink-3)'};
+(function(){
+ const svg=$('#actors');const pos={};
+ const layout={scef:[250,250],nug:[160,205],crph:[150,295],pdf:[205,365],cdm:[110,385],kio:[330,125],knu:[380,335],cnf:[290,405],knpp:[400,425],aa:[440,225],tnla:[470,110],mndaa:[540,160],uwsa:[565,255],reg:[520,385],cn:[560,55],asean:[590,480],th:[60,480],west:[60,90],in:[60,290],bd:[180,490]};
+ AC.forEach(a=>pos[a.id]=layout[a.id]);
+ const gl=el('g'),gn=el('g');svg.append(gl,gn);
+ AL.forEach(([a,b,t])=>{const [x1,y1]=pos[a],[x2,y2]=pos[b];const p=el('path',{d:`M${x1},${y1} Q${(x1+x2)/2+(y1-y2)*.15},${(y1+y2)/2+(x2-x1)*.15} ${x2},${y2}`,class:'link'+(t==='cf'?' cf':t==='war'?' hostile':''),'stroke-width':t==='eng'?1:1.5,'stroke-dasharray':t==='eng'?'2 5':null});p.dataset.a=a;p.dataset.b=b;gl.append(p)});
+ AC.forEach(a=>{const [x,y]=pos[a.id];const g=el('g',{class:'node'});g.dataset.id=a.id;const big=['scef','reg','cn','aa'].includes(a.id);
+  g.append(el('circle',{cx:x,cy:y,r:big?22:16,fill:GC[a.g]}));g.append(el('text',{x:x,y:y+(big?36:30)},a.n));
+  g.addEventListener('click',()=>selA(a.id));gn.append(g)});
+ const REL={cf:'ceasefire',eng:'engaged / talks',war:'at war',undefined:'aligned'};
+ function selA(id){$$('#actors .node').forEach(n=>{n.classList.toggle('sel',n.dataset.id===id);const conn=n.dataset.id===id||AL.some(l=>(l[0]===id&&l[1]===n.dataset.id)||(l[1]===id&&l[0]===n.dataset.id));n.classList.toggle('dim',!conn)});
+  $$('#actors .link').forEach(l=>l.classList.toggle('dim',!(l.dataset.a===id||l.dataset.b===id)));
+  const a=AC.find(x=>x.id===id);const rels=AL.filter(l=>l[0]===id||l[1]===id).map(l=>{const o=AC.find(x=>x.id===(l[0]===id?l[1]:l[0]));return `<b>${o.n}</b> <span style="color:var(--ink-3)">· ${REL[l[2]]}</span>`}).join('<br>');
+  $('#actor-detail').innerHTML=`<div class="eyebrow" style="color:${GC[a.g]}">${{res:'Resistance, political',eao:'Ethnic armed organisation',reg:'Regime',ext:'External actor'}[a.g]}</div><h3>${a.n}</h3><div class="role">${a.r}</div><p>${a.s}</p><div class="rel">${rels||'No mapped links.'}</div><div class="q"><b>Question for the room</b>${a.q}</div><div class="src" style="margin-top:14px">ICG B188 · ISP-Myanmar · Irrawaddy · UNHCR · Burma Coup Resistance Notes, Sep 2026</div>`}
+ selA('scef');
+})();
+
+/* ---------- tensions ---------- */
+const POL=[
+{id:'arm',a:'Armed pressure first',b:'Political settlement first',pa:'Only battlefield cost has moved the regime; territorial gains created governance space.',pb:'Stalemate and ammunition depletion argue that victory will not be military; China will broker regardless.',ca:'Civilian exposure; conscription cycles; donor fatigue.',cb:'Legitimising an unelected president; ceasefires that freeze fragmentation.',ev:'Evidence on this page: 22 of 101 towns retaken; airstrike deaths up 52% in 2025; ISP calls it a strategic stalemate.'},
+{id:'unity',a:'Unity of command',b:'Autonomy of fronts',pa:'SCEF and coordinated operations show what alignment can do; donors and states want one address.',pb:'The AA, KIO and local PDFs succeeded precisely because they were not waiting for the centre.',ca:'Slow, bureaucratic, contested legitimacy.',cb:'Warlordism; incompatible deals; no political alternative to offer.',ev:'Evidence: SCEF formed only in March 2026; the AA holds 14 of 17 townships outside it; ISP: "nearly half the country" under warlordism.'},
+{id:'fed',a:'Federal architecture now',b:'Federal architecture later',pa:'Interim arrangements are hardening into facts on the ground; design them before they set.',pb:'Constitution-writing splits the coalition while the regime consolidates.',ca:'Time and talent pulled from the fight; unresolved vetoes.',cb:'Liberated areas govern in mutually incompatible ways.',ev:'Evidence: Karenni IEC, two Chin frameworks, the Arakan People’s Authority and NUG townships already run parallel systems.'},
+{id:'intl',a:'Work with China’s mediation',b:'Resist China’s mediation',pa:'Beijing decides what the northern map looks like; engagement is the only route to influence it.',pb:'Its ceasefires have only ever served the regime’s survival.',ca:'Legitimising regime-friendly settlements.',cb:'Exclusion from the only table that matters.',ev:'Evidence: Lashio returned Apr 2025; MNDAA and TNLA ceasefires; Chinese aircraft and drones in 2026; ISP’s intervention scenario runs through Beijing.'},
+{id:'hum',a:'Aid through resistance structures',b:'Aid through neutral channels',pa:'Resistance administrations reach people the UN cannot; at 43% funding every dollar must go where access exists.',pb:'Neutrality protects access and staff; politicised aid invites strikes on aid workers.',ca:'Donor rules; accountability gaps.',cb:'Regime gatekeeping of a plan that reaches a third of its target.',ev:'Evidence: 1.6M of 4.9M reached by March; 4M displaced; US grants down 26% of the total pool.'}
+];
+const polState=ls.get('sr-pol',{});
+const polEl=$('#pol');
+POL.forEach(p=>{const v=polState[p.id]??50;const d=document.createElement('div');d.className='card row';d.innerHTML=`<div class="heads"><span>${p.a}</span><span>${p.b}</span></div><input type="range" min="0" max="100" value="${v}" id="pol-${p.id}" aria-label="${p.a} versus ${p.b}"><div class="pros"><div><b>Upside</b>${p.pa}<br><b style="margin-top:6px">Cost</b>${p.ca}</div><div><b>Upside</b>${p.pb}<br><b style="margin-top:6px">Cost</b>${p.cb}</div></div><div class="read" id="read-${p.id}"></div><div class="ev">${p.ev}</div>`;polEl.append(d);
+ const r=d.querySelector('input');const upd=()=>{const x=+r.value;polState[p.id]=x;ls.set('sr-pol',polState);const t=x<35?`Leaning: ${p.a}`:x>65?`Leaning: ${p.b}`:'Holding the middle';$('#read-'+p.id).textContent=`${t} · ${x}`};r.addEventListener('input',upd);upd()});
+$('#pol-reset').onclick=()=>{POL.forEach(p=>{const r=$('#pol-'+p.id);r.value=50;r.dispatchEvent(new Event('input'))})};
+$('#pol-copy').onclick=()=>{const txt=POL.map(p=>`${p.a} — ${p.b}: ${polState[p.id]??50}/100`).join('\n');navigator.clipboard.writeText(txt).then(()=>$('#pol-msg').textContent='Copied.').catch(()=>{$('#pol-msg').textContent=txt})};
+
+/* ---------- scenarios ---------- */
+const SC=[
+{id:'base',n:'Baseline',c:'var(--s-junta)',s:'The regime keeps the upper hand through the election and Chinese support, governing a diminished state with deepening internal fractures and a worsening humanitarian crisis.'},
+{id:'int',n:'Intervention',c:'var(--s-hum)',s:'Armed conflict is converted into political dialogue, with China’s mediation managed rather than resisted. Requires the resistance to offer a coherent political alternative.'},
+{id:'worst',n:'Worst case',c:'var(--s-crit)',s:'Deepening fragmentation, refugee spillover into neighbours, and nationalist hardening among a fourth-generation military leadership.'}
+];
+const SIGNS=[
+{t:'Regime retakes and holds district towns in Anyar',w:{base:2}},{t:'Chinese hardware visibly changes the air and drone balance',w:{base:2}},{t:'Parliament and cabinet function without visible USDP–military rupture',w:{base:1}},{t:'Donor funding for the response stays under 50%',w:{base:1,worst:1}},
+{t:'SCEF produces a shared negotiating position that the AA endorses',w:{int:2}},{t:'A China-brokered ceasefire extends to a SCEF member',w:{int:2,base:1}},{t:'ASEAN, Japan or India hosts talks that include the NUG',w:{int:2}},{t:'Regime accepts humanitarian corridors run through resistance areas',w:{int:1}},
+{t:'Large-scale offensives resume with new external supply to the resistance',w:{worst:1}},{t:'Rival resistance groups fight each other over territory or trade',w:{worst:2}},{t:'Refugee outflows to Thailand, India or Bangladesh surge',w:{worst:2}},{t:'Conscription abductions and mass killings keep rising',w:{worst:1,base:1}}
+];
+const sState=ls.get('sr-signs',{});
+$('#scen').innerHTML=SC.map(s=>`<div class="card" style="--sc:${s.c}"><div class="eyebrow">ISP-Myanmar 2026 scenario</div><h3 style="font-size:18px;margin-top:4px">${s.n}</h3><div class="score num" id="sc-${s.id}">0</div><div class="eyebrow">signpost weight</div><div class="bar"><i id="bar-${s.id}"></i></div><p>${s.s}</p></div>`).join('');
+$('#signs').innerHTML=SIGNS.map((s,i)=>`<label><input type="checkbox" id="sg-${i}" ${sState[i]?'checked':''}><span>${s.t}</span><span class="tag">${Object.keys(s.w).map(k=>SC.find(x=>x.id===k).n).join(' · ')}</span></label>`).join('');
+function scoreSc(){const tot={base:0,int:0,worst:0};SIGNS.forEach((s,i)=>{if($('#sg-'+i).checked)for(const k in s.w)tot[k]+=s.w[k]});const max=Math.max(1,...Object.values(tot));SC.forEach(s=>{$('#sc-'+s.id).textContent=tot[s.id];$('#bar-'+s.id).style.width=(tot[s.id]/max*100)+'%'})}
+SIGNS.forEach((s,i)=>$('#sg-'+i).addEventListener('change',e=>{sState[i]=e.target.checked;ls.set('sr-signs',sState);scoreSc()}));scoreSc();
+
+/* ---------- calibration game ---------- */
+const CQ=[
+{id:'idp',q:'How many people are displaced inside Myanmar?',min:0,max:8,step:.1,unit:'M',ans:4.03,src:'UNHCR, Aug 2026',f:v=>v.toFixed(1)+'M'},
+{id:'terr',q:'What share of national territory do EAOs and PDFs control?',min:0,max:100,step:1,unit:'%',ans:37.8,src:'ISP-Myanmar SoM 2026',f:v=>Math.round(v)+'%'},
+{id:'parl',q:'What share of the new parliament is military-aligned?',min:0,max:100,step:1,unit:'%',ans:86,src:'ICG, Jun 2026',f:v=>Math.round(v)+'%'},
+{id:'fund',q:'How much of the 2026 humanitarian plan is funded?',min:0,max:100,step:1,unit:'%',ans:43,src:'OCHA, Jul 2026',f:v=>Math.round(v)+'%'},
+{id:'towns',q:'Of 101 towns the military lost, how many has it retaken?',min:0,max:101,step:1,unit:'',ans:22,src:'ISP-Myanmar ST-04, Jul 2026',f:v=>Math.round(v)+''},
+{id:'air',q:'Civilians verified killed by airstrikes in 2025?',min:0,max:3000,step:10,unit:'',ans:982,src:'OHCHR, Feb 2026',f:v=>Math.round(v).toLocaleString()}
+];
+const cState=ls.get('sr-cal',{});
+$('#cal').innerHTML=CQ.map(c=>{const st=cState[c.id];const g=st?st.g:(c.min+c.max)/2;return `<div class="card cq" data-id="${c.id}"><div class="q">${c.q}</div><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" value="${g}" id="cal-${c.id}" aria-label="${c.q}" ${st?'disabled':''}><div class="guess"><span>${c.f(c.min)}</span><b id="cg-${c.id}">${c.f(g)}</b><span>${c.f(c.max)}</span></div><div class="res" id="cr-${c.id}"></div><div class="actions"><button class="btn primary" id="cb-${c.id}" ${st?'hidden':''}>Reveal</button></div></div>`}).join('');
+function showRes(c){const st=cState[c.id];if(!st)return;const off=Math.abs(st.g-c.ans)/c.ans*100;const cls=off<=10?'good':off<=30?'':'bad';$('#cr-'+c.id).innerHTML=`Record: <b>${c.f(c.ans)}</b> <span class="off ${cls}">${st.g<c.ans?'under':'over'} by ${Math.round(off)}%</span><br><span style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">${c.src}</span>`}
+function calScore(){const done=CQ.filter(c=>cState[c.id]);if(!done.length)return;const s=done.reduce((a,c)=>{const off=Math.abs(cState[c.id].g-c.ans)/c.ans;return a+Math.max(0,100-Math.max(0,off-.1)*250)},0)/done.length;$('#calscore').textContent=Math.round(s);$('#caltext').textContent=`${done.length} of ${CQ.length} revealed. ${s>=80?'Well calibrated: your priors track the record.':s>=50?'Partly calibrated: check which direction you miss in.':'Time to recalibrate: the record differs a lot from the picture in your head.'}`}
+CQ.forEach(c=>{const r=$('#cal-'+c.id);r.addEventListener('input',()=>$('#cg-'+c.id).textContent=c.f(+r.value));$('#cb-'+c.id).onclick=()=>{cState[c.id]={g:+r.value};ls.set('sr-cal',cState);r.disabled=true;$('#cb-'+c.id).hidden=true;showRes(c);calScore()};showRes(c)});calScore();
+
+/* ---------- recalibrate flips ---------- */
+const FL=[
+{a:'The regime will collapse under economic and battlefield pressure within a couple of years.',b:'GDP is down 16% since 2020 and the military lost two regional commands, yet it staged an election, installed a president and retook 22 towns. Collapse was never linear.'},
+{a:'International recognition of the NUG is a matter of time.',b:'No state recognises the NUG. Engagement runs through humanitarian and technical channels, and China’s recognition of the new administration sets the regional tone.'},
+{a:'Ethnic armed organisations and the Bamar-majority resistance will converge naturally around federalism.',b:'SCEF formed only in March 2026, and the most powerful group, the AA, sits outside it. Convergence has to be built, deal by deal.'},
+{a:'Territorial gains translate into political leverage.',b:'ISP: historic gains, but no political alternative to show for them. Land without an offer is not leverage.'},
+{a:'China would stay neutral or hedge.',b:'Beijing brokered ceasefires, forced the return of Lashio, restrained the UWSA and supplied aircraft and drones. It is the decisive external actor.'},
+{a:'Western support would grow as the atrocities became undeniable.',b:'2025 was the deadliest year for children since the coup, and the year the US withdrew 26% of the grant pool. The 2026 plan is 43% funded.'},
+{a:'The military could not replace its losses.',b:'Conscription has pulled in around 135,000 people despite 40% attrition. Undertrained and unwilling, but present on the line.'},
+{a:'Elections would be impossible to hold.',b:'They were held, badly and partially, and produced a parliament that is 86% military-aligned. Impossible turned out to mean illegitimate, which is a different problem.'},
+{a:'Airpower cannot hold ground, so it does not decide the war.',b:'It does not hold ground. It empties it: 982 verified airstrike deaths in 2025, 232 of them children, and 4 million people displaced.'}
+];
+const flips=$('#flips');FL.forEach((f,i)=>{const d=document.createElement('div');d.className='flip';d.setAttribute('role','button');d.tabIndex=0;d.innerHTML=`<div class="in"><div class="face"><div class="eyebrow">2022 · we assumed</div><p>${f.a}</p><div class="hint">tap to recalibrate →</div></div><div class="face back"><div class="eyebrow">2026 · what we know</div><p>${f.b}</p></div></div>`;const tg=()=>d.classList.toggle('on');d.onclick=tg;d.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();tg()}};flips.append(d)});
+const own=ls.get('sr-own',[]);const ol=$('#own-list');
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function drawOwn(){ol.innerHTML=own.map(o=>`<div><span>${esc(o.a)}</span><span class="arr">→</span><span>${esc(o.b)}</span></div>`).join('')}
+$('#own-add').onclick=()=>{const a=$('#own-a').value.trim(),b=$('#own-b').value.trim();if(!a||!b)return;own.push({a,b});ls.set('sr-own',own);$('#own-a').value='';$('#own-b').value='';drawOwn()};
+drawOwn();
+})();
+</script>
+</body></html>

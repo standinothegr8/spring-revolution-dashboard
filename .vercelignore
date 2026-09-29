@@ -1,0 +1,9 @@
+node_modules/
+.venv/
+.build/
+__pycache__/
+Claude outputs/
+app.py
+requirements.txt
+.streamlit/
+*.bak
