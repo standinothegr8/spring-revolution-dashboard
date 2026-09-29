@@ -6,3 +6,5 @@ assets/index.html
 node_modules/
 Claude outputs/
 *.bak
+.vercel
+.env*
