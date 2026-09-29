@@ -258,7 +258,8 @@ h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;font-weight:600;l
 .cq .res .off.good{background:var(--accent-soft);color:var(--accent)}
 .cq .res .off.bad{background:var(--red-soft);color:var(--red)}
 .cq .actions{margin-top:8px;display:flex;gap:8px;align-items:center}
-.calscore{padding:16px 18px;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;margin-bottom:14px}
+.calscore{padding:16px 18px;display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;margin-bottom:14px}
+@media (max-width:620px){.calscore{grid-template-columns:auto 1fr}.calscore .btn{grid-column:2;justify-self:start}}
 .calscore .n{font-family:var(--display);font-size:44px;font-weight:700;line-height:1;color:var(--accent)}
 .calscore p{margin:0;color:var(--ink-2);font-size:13.5px}
 
@@ -516,7 +517,7 @@ h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;font-weight:600;l
   <!-- 08 RECALIBRATE -->
   <section class="panel" id="p-recalibrate" role="tabpanel" hidden>
     <div class="sec-head"><h2>Recalibrate</h2><p>First, guess before you look: six numbers, one slider each. Then the assumption cards. The gap between guess and record is the workshop's real subject.</p></div>
-    <div class="card calscore"><div class="n num" id="calscore">—</div><p id="caltext">Calibration score appears after your first reveal. 100 means every guess was within 10% of the record.</p></div>
+    <div class="card calscore"><div class="n num" id="calscore">—</div><p id="caltext">Calibration score appears after your first reveal. 100 means every guess was within 10% of the record.</p><button class="btn" id="cal-reset" hidden>Reset guesses</button></div>
     <div class="cal" id="cal"></div>
     <h2 style="font-size:20px;margin:28px 0 12px">Assumption audit</h2>
     <div class="flip-grid" id="flips"></div>
@@ -813,7 +814,19 @@ const cState=ls.get('sr-cal',{});
 $('#cal').innerHTML=CQ.map(c=>{const st=cState[c.id];const g=st?st.g:(c.min+c.max)/2;return `<div class="card cq" data-id="${c.id}"><div class="q">${c.q}</div><input type="range" min="${c.min}" max="${c.max}" step="${c.step}" value="${g}" id="cal-${c.id}" aria-label="${c.q}" ${st?'disabled':''}><div class="guess"><span>${c.f(c.min)}</span><b id="cg-${c.id}">${c.f(g)}</b><span>${c.f(c.max)}</span></div><div class="res" id="cr-${c.id}"></div><div class="actions"><button class="btn primary" id="cb-${c.id}" ${st?'hidden':''}>Reveal</button></div></div>`}).join('');
 function showRes(c){const st=cState[c.id];if(!st)return;const off=Math.abs(st.g-c.ans)/c.ans*100;const cls=off<=10?'good':off<=30?'':'bad';$('#cr-'+c.id).innerHTML=`Record: <b>${c.f(c.ans)}</b> <span class="off ${cls}">${st.g<c.ans?'under':'over'} by ${Math.round(off)}%</span><br><span style="font-family:var(--mono);font-size:11px;color:var(--ink-3)">${c.src}</span>`}
 function calScore(){const done=CQ.filter(c=>cState[c.id]);if(!done.length)return;const s=done.reduce((a,c)=>{const off=Math.abs(cState[c.id].g-c.ans)/c.ans;return a+Math.max(0,100-Math.max(0,off-.1)*250)},0)/done.length;$('#calscore').textContent=Math.round(s);$('#caltext').textContent=`${done.length} of ${CQ.length} revealed. ${s>=80?'Well calibrated: your priors track the record.':s>=50?'Partly calibrated: check which direction you miss in.':'Time to recalibrate: the record differs a lot from the picture in your head.'}`}
-CQ.forEach(c=>{const r=$('#cal-'+c.id);r.addEventListener('input',()=>$('#cg-'+c.id).textContent=c.f(+r.value));$('#cb-'+c.id).onclick=()=>{cState[c.id]={g:+r.value};ls.set('sr-cal',cState);r.disabled=true;$('#cb-'+c.id).hidden=true;showRes(c);calScore()};showRes(c)});calScore();
+CQ.forEach(c=>{const r=$('#cal-'+c.id);r.addEventListener('input',()=>$('#cg-'+c.id).textContent=c.f(+r.value));$('#cb-'+c.id).onclick=()=>{cState[c.id]={g:+r.value};ls.set('sr-cal',cState);r.disabled=true;$('#cb-'+c.id).hidden=true;showRes(c);calScore();calResetBtn()};showRes(c)});calScore();
+function calResetBtn(){$('#cal-reset').hidden=!Object.keys(cState).length}
+function calReset(){
+  if(!Object.keys(cState).length)return;
+  if(!confirm('Clear all six guesses and the calibration score?\n\nThis only affects this browser, and cannot be undone.'))return;
+  Object.keys(cState).forEach(k=>delete cState[k]);ls.set('sr-cal',cState);
+  CQ.forEach(c=>{const r=$('#cal-'+c.id);r.disabled=false;r.value=(c.min+c.max)/2;
+    $('#cg-'+c.id).textContent=c.f(+r.value);$('#cr-'+c.id).innerHTML='';$('#cb-'+c.id).hidden=false});
+  $('#calscore').textContent='\u2014';
+  $('#caltext').textContent='Calibration score appears after your first reveal. 100 means every guess was within 10% of the record.';
+  calResetBtn();$('#cal').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('#cal-reset').onclick=calReset;calResetBtn();
 
 /* ---------- recalibrate flips ---------- */
 const FL=[
