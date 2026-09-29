@@ -452,7 +452,7 @@ h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;font-weight:600;l
     <div class="sec-head"><h2>The constellation</h2><p>Solid lines are alliance or coordination, dashed blue are China-brokered ceasefires, dotted red is active war. Click a node to see its 2026 position and the question it faces.</p></div>
     <div class="actor-wrap">
       <div class="card"><svg class="actors" id="actors" viewBox="0 0 640 540"></svg>
-        <div class="legend"><span><i style="background:var(--s-res)"></i>Resistance, political</span><span><i style="background:var(--s-hum)"></i>Ethnic armed organisation</span><span><i style="background:var(--s-junta)"></i>Regime</span><span><i style="background:var(--ink-3)"></i>External</span></div>
+        <div class="legend"><span><i style="background:var(--s-res)"></i>Emerged after the Spring Revolution</span><span><i style="background:var(--s-hum)"></i>Ethnic armed organisation</span><span><i style="background:var(--s-junta)"></i>Regime</span><span><i style="background:var(--ink-3)"></i>External</span></div>
       </div>
       <div class="card actor-detail" id="actor-detail"></div>
     </div>
@@ -771,7 +771,7 @@ const GC={res:'var(--s-res)',eao:'var(--s-hum)',reg:'var(--s-junta)',ext:'var(--
  function selA(id){$$('#actors .node').forEach(n=>{n.classList.toggle('sel',n.dataset.id===id);const conn=n.dataset.id===id||AL.some(l=>(l[0]===id&&l[1]===n.dataset.id)||(l[1]===id&&l[0]===n.dataset.id));n.classList.toggle('dim',!conn)});
   $$('#actors .link').forEach(l=>l.classList.toggle('dim',!(l.dataset.a===id||l.dataset.b===id)));
   const a=AC.find(x=>x.id===id);const rels=AL.filter(l=>l[0]===id||l[1]===id).map(l=>{const o=AC.find(x=>x.id===(l[0]===id?l[1]:l[0]));return `<b>${o.n}</b> <span style="color:var(--ink-3)">· ${REL[l[2]]}</span>`}).join('<br>');
-  $('#actor-detail').innerHTML=`<div class="eyebrow" style="color:${GC[a.g]}">${{res:'Resistance, political',eao:'Ethnic armed organisation',reg:'Regime',ext:'External actor'}[a.g]}</div><h3>${a.n}</h3><div class="role">${a.r}</div><p>${a.s}</p><div class="rel">${rels||'No mapped links.'}</div><div class="q"><b>Question for the room</b>${a.q}</div><div class="src" style="margin-top:14px">ICG B188 · ISP-Myanmar · Irrawaddy · UNHCR · Burma Coup Resistance Notes, Sep 2026</div>`}
+  $('#actor-detail').innerHTML=`<div class="eyebrow" style="color:${GC[a.g]}">${{res:'Emerged after the Spring Revolution',eao:'Ethnic armed organisation',reg:'Regime',ext:'External actor'}[a.g]}</div><h3>${a.n}</h3><div class="role">${a.r}</div><p>${a.s}</p><div class="rel">${rels||'No mapped links.'}</div><div class="q"><b>Question for the room</b>${a.q}</div><div class="src" style="margin-top:14px">ICG B188 · ISP-Myanmar · Irrawaddy · UNHCR · Burma Coup Resistance Notes, Sep 2026</div>`}
  selA('scef');
 })();
 
